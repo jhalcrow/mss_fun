@@ -1,0 +1,4 @@
+gdsampler.py
+===============
+A Gibbs sampler for a model inspired by LDA to infer genres from
+a set of songs
