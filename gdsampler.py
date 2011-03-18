@@ -1,6 +1,7 @@
 import numpy as np
 from itertools import izip
 from bisect import bisect
+
 class GaussDirichletSampler(object):
     """
     Gibbs sampler for a model similar to LDA but with the
@@ -63,18 +64,18 @@ class GaussDirichletSampler(object):
             k_new = bisect(cdf, np.random.random())
             
             self.timbre_totals[k_new] += song[i]
-            self.genre_count[k_new} += 1
+            self.genre_count[k_new] += 1
             sgc[k_new] += 1
 
-def generate_synthetic_corpus(N, L, T, mu0, sigma0, alpha):
+def generate_synthetic_data(N, L, T, mu0, sigma0, alpha):
 
-    alpha = alpha if hasattr(alpha, __iter__) else [alpha] * self.T
-    songs = np.empty((self.N, self.L, self.T))
-    genres = np.random.dirichlet(alpha, (self.N, self.L))
-    genre_mean = np.random.multivariate_normal(mu0, sigma0 * np.eye(self.T), self.T)
+    alpha = alpha if hasattr(alpha, '__iter__') else [alpha] * T
+    songs = np.empty((N, L, T))
+    genres = np.random.dirichlet(alpha, (N, L))
+    genre_mean = np.random.multivariate_normal(mu0, sigma0 * np.eye(T), T)
     for n in xrange(N):
         for l in xrange(L):
-            k = self.genres[n, l]
-            songs[n,l] = np.random.multivariate_normal(genre_mean[k], np.eye(self.T) * sigma0)
+            k = genres[n, l]
+            songs[n,l] = np.random.multivariate_normal(genre_mean[k], np.eye(T) * sigma0)
 
     return (genre_mean, GaussDirichletSampler(songs, K, alpha0, mu0, sigma0, genres))
