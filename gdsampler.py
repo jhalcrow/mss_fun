@@ -2,6 +2,7 @@ import numpy as np
 from itertools import izip
 from bisect import bisect
 
+
 class GaussDirichletSampler(object):
     """
     Gibbs sampler for a model similar to LDA but with the
@@ -18,26 +19,29 @@ class GaussDirichletSampler(object):
 
         self.N = len(self.songs)
         self.T = len(self.songs[0][0])
-        self.genres = genres if genres else self.randomize_state()
-        self.update_genre_params()
+        self.genres = self.randomize_state() if genres is None else genres
+        self.update_statistics()
 
     def randomize_state(self):
-        self.genres = [np.random.random_integers(0, self.K-1, self.N)
-                            for n in xrange(self.N)] 
+        self.genres = [np.random.random_integers(0, self.K - 1, self.N)
+                            for n in xrange(self.N)]
 
     def update_statistics(self):
         self.timbre_totals = np.zeros((self.K, self.T))
         self.genre_count = np.zeros(self.K, dtype=np.uint16)
         self.song_genre_count = np.zeros((self.N, self.K), dtype=np.uint16)
 
-        for (song, genr, song_cts) in izip(self.songs, 
-                                          self.genres, 
+        for (song, genr, song_cts) in izip(self.songs,
+                                          self.genres,
                                           self.song_genre_count):
             for (segment, k) in izip(song, genr):
                 self.timbre_totals[k] += segment
                 self.genre_count[k] += 1
                 song_cts[k] += 1
-        
+
+    def genre_timbre_mean(self):
+        return np.transpose(self.timbre_totals.T / self.genre_count)
+
     def sample_song(self, j):
         genres = self.genres[j]
         song = self.songs[j]
@@ -45,7 +49,7 @@ class GaussDirichletSampler(object):
 
         cdf = np.zeros(self.K)
         pdf = np.zeros(self.K)
-        
+
         for i in xrange(len(song)):
             # Hold out this segment
             k_old = genres[i]
@@ -55,27 +59,42 @@ class GaussDirichletSampler(object):
 
             # Compute p(k_ji | everything else)
             timbre_mu = self.timbre_totals / self.genre_count
-            pdf = (sgc + self.alpha) / (len(song) + self.K * self.alpha)  
+            pdf = (sgc + self.alpha) / (len(song) + self.K * self.alpha)
             # TODO: Improve the prior
-            pdf *= np.exp(-np.power(timbre_mu - song[i], 2) / (2 * self.sigma0**2))
+            pdf *= np.exp(-np.power(timbre_mu - song[i], 2) /
+                          (2 * self.sigma0 ** 2))
 
             # Sample new genre
             np.cumsum(pdf, out=cdf)
             k_new = bisect(cdf, np.random.random())
-            
+
             self.timbre_totals[k_new] += song[i]
             self.genre_count[k_new] += 1
             sgc[k_new] += 1
 
-def generate_synthetic_data(N, L, T, mu0, sigma0, alpha):
 
-    alpha = alpha if hasattr(alpha, '__iter__') else [alpha] * T
+def generate_synthetic_data(N, L, T, K, mu0, sigma0, alpha):
+
+    alpha = alpha if hasattr(alpha, '__iter__') else [alpha] * K
     songs = np.empty((N, L, T))
-    genres = np.random.dirichlet(alpha, (N, L))
-    genre_mean = np.random.multivariate_normal(mu0, sigma0 * np.eye(T), T)
+    theta = np.random.dirichlet(alpha, N)
+    genres = np.empty((N, L), dtype=np.uint32)
+    genre_mean = np.random.multivariate_normal(mu0, sigma0 * np.eye(T), K)
     for n in xrange(N):
+        cdf = np.cumsum(theta[n])
         for l in xrange(L):
+            genres[n, l] = bisect(cdf, np.random.random())
             k = genres[n, l]
-            songs[n,l] = np.random.multivariate_normal(genre_mean[k], np.eye(T) * sigma0)
+            assert(k < K)
+            songs[n, l] = np.random.multivariate_normal(
+                genre_mean[k],
+                np.eye(T) * sigma0
+            )
 
-    return (genre_mean, GaussDirichletSampler(songs, K, alpha0, mu0, sigma0, genres))
+    return (genre_mean,
+            GaussDirichletSampler(songs, K, alpha, mu0, sigma0, genres)
+           )
+
+
+def load_timbre():
+    pass
