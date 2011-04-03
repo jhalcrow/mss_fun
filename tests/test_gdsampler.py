@@ -11,12 +11,12 @@ def test_synthetic_data():
     sigma0 = 20
     alpha = 0.5
 
-    samples = 100
+    samples = 10
     mu_total = np.zeros(T)
     for i in xrange(samples):
         (mu, theta, sampler) = generate_synthetic_data(N, L, T, K, mu0,
                                                        sigma0, alpha)
-        mu_est = sampler.genre_timbre_mean()
+        (mu_post, cov_post) = sampler.genre_timbre_posterior()
         assert(np.max(np.abs(mu_est - mu)) < 3 * np.sqrt(sigma0))
         mu_total += mu.sum(axis=0)
 
@@ -37,7 +37,15 @@ def test_sampler():
 
     (mu, theta, sampler) = generate_synthetic_data(N, L, T, K, mu0,
                                                    sigma0, alpha)
+    genres_orig = np.copy(sampler.genres)
+    sampler.iterate(200)
 
+    gt_post = sampler.genre_timber_posterior()
+    sampler_mu.sort()
+    mu_l = list(mu)
+    mu_l.sort()
+
+    assert(np.linalg.norm(mu_l - sampler_mu) < 0.1)
 
 #TODO
 def test_optimize_alpha():
