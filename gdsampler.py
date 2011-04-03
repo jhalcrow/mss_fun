@@ -72,6 +72,10 @@ class GaussDirichletSampler(object):
             self.genre_count[k_new] += 1
             sgc[k_new] += 1
 
+        def iterate(self):
+            for song in xrange(self.N):
+                self.sample_song(song)
+
 
 def generate_synthetic_data(N, L, T, K, mu0, sigma0, alpha):
 
