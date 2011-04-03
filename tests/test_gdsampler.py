@@ -14,14 +14,15 @@ def test_synthetic_data():
     samples = 100
     mu_total = np.zeros(T)
     for i in xrange(samples):
-        (mu, sampler) = generate_synthetic_data(N, L, T, K, mu0, sigma0, alpha)
+        (mu, theta, sampler) = generate_synthetic_data(N, L, T, K, mu0,
+                                                       sigma0, alpha)
         mu_est = sampler.genre_timbre_mean()
         assert(np.max(np.abs(mu_est - mu)) < 3 * np.sqrt(sigma0))
         mu_total += mu.sum(axis=0)
-    
+
     trials = samples * K
     assert(np.max(mu_total / (samples * K) - mu0) < \
-           3 * sigma0  / np.sqrt(samples * K))
+           3 * sigma0 / np.sqrt(samples * K))
 
 
 #TODO
@@ -34,7 +35,8 @@ def test_sampler():
     sigma0 = 20
     alpha = 0.5
 
-    (mu, sampler) = generate_synthetic_data(N, L, T, K, mu0, sigma0, alpha)
+    (mu, theta, sampler) = generate_synthetic_data(N, L, T, K, mu0,
+                                                   sigma0, alpha)
 
 
 #TODO
